@@ -52,7 +52,7 @@ export default function Footer() {
         // 1. Fetch Contact Info
         try {
           const snap = await getDoc(
-            doc(db, "websites", "clinidixcom", "pages", "contact")
+            doc(db, "websites", "rajvedcom", "pages", "contact")
           );
           if (isMounted && snap.exists()) {
             setContactInfo(snap.data().contactInfo || []);
@@ -94,7 +94,7 @@ export default function Footer() {
 
       try {
         const snap = await getDoc(
-          doc(db, "websites", "clinidixcom", "districts", district)
+          doc(db, "websites", "rajvedcom", "districts", district)
         );
 
         if (snap.exists()) {
@@ -132,9 +132,9 @@ export default function Footer() {
   });
   const emails = emailItem
     ? (Array.isArray(emailItem.value)
-        ? emailItem.value
-        : [emailItem.value]
-      ).filter((v) => typeof v === "string" && v.trim() !== "")
+      ? emailItem.value
+      : [emailItem.value]
+    ).filter((v) => typeof v === "string" && v.trim() !== "")
     : [];
 
   // Extract address flexibly
@@ -148,56 +148,28 @@ export default function Footer() {
     );
   });
   const rawAddress = addressItem
-    ? Array.isArray(addressItem.value)
-      ? addressItem.value.filter(Boolean).join(", ")
-      : typeof addressItem.value === "string"
-      ? addressItem.value.trim()
-      : ""
+    ? (Array.isArray(addressItem.value)
+      ? addressItem.value[0]
+      : addressItem.value
+    )
     : "";
 
   const dynamicAddress = districtData
     ? `${districtData.district}, ${districtData.state}, India`
     : rawAddress;
 
-  // Fallback list of top categories if database has none yet
-  const displayCategories = useMemo(() => {
-    if (categories.length > 0) return categories.slice(0, 6);
-    return [
-      "Diagnostic Analyzers",
-      "Molecular Diagnostics",
-      "Hospital & ICU Gear",
-      "Laboratory Equipment",
-      "Reagents & Consumables",
-    ];
-  }, [categories]);
+  const defaultCategories = [
+    "Clinical Chemistry Analyzers",
+    "Hematology Analyzers",
+    "ELISA & Microplate Readers",
+    "Electrolyte & Blood Gas Analyzers",
+    "Pathology Reagents & Controls",
+  ];
 
-  if (loading) {
-    return (
-      <footer className="border-t border-[#E8D3BC] bg-[#FDFBD4]">
-        <div className="container-custom py-16">
-          <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i}>
-                <div className="mb-6 h-8 w-40 animate-pulse rounded bg-[#EAD9C4]" />
-                {[...Array(5)].map((_, j) => (
-                  <div
-                    key={j}
-                    className="mb-4 h-5 animate-pulse rounded bg-[#F3E4D2]"
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className="mt-12 border-t border-[#E8D3BC] pt-6">
-            <div className="h-5 w-72 animate-pulse rounded bg-[#EAD9C4]" />
-          </div>
-        </div>
-      </footer>
-    );
-  }
+  const displayCategories = categories.length > 0 ? categories.slice(0, 5) : defaultCategories;
 
   return (
-    <footer className="border-t border-[#E8D3BC] bg-gradient-to-b from-white via-[#FFF9EF] to-[#FDFBD4]">
+    <footer className="border-t border-[#FBD5D3] bg-gradient-to-b from-white via-[#FFF9F8] to-[#FFF0EF]">
       <div className="container-custom py-14 sm:py-16">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {/* Company & Social */}
@@ -215,14 +187,14 @@ export default function Footer() {
                 />
               </Link>
 
-              <p className="mt-3 text-sm leading-relaxed text-[#5B4634]">
+              <p className="mt-3 text-sm leading-relaxed text-[#796565]">
                 Delivering certified biomedical and diagnostic instruments, NABL calibration standards, and 24/7 technical field engineering support across India.
               </p>
             </div>
 
             {/* Social Media Links */}
-            <div className="mt-6 pt-4 border-t border-[#E8D3BC]/60">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#713600] mb-3">
+            <div className="mt-6 pt-4 border-t border-[#FBD5D3]/60">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#C93B3B] mb-3">
                 Follow Us
               </h4>
               <div className="flex items-center gap-3">
@@ -231,7 +203,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Follow Raj Biosis on Facebook"
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#E8D3BC] bg-white text-[#1877F2] shadow-sm transition-all duration-300 hover:scale-110 hover:bg-[#1877F2] hover:text-white hover:shadow-md"
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#FBD5D3] bg-white text-[#1877F2] shadow-sm transition-all duration-300 hover:scale-110 hover:bg-[#1877F2] hover:text-white hover:shadow-md"
                 >
                   <FaFacebook size={20} />
                 </a>
@@ -241,7 +213,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Follow Raj Biosis on Instagram"
-                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#E8D3BC] bg-white text-[#E4405F] shadow-sm transition-all duration-300 hover:scale-110 hover:bg-gradient-to-tr hover:from-[#F58529] hover:via-[#DD2A7B] hover:to-[#8134AF] hover:text-white hover:shadow-md"
+                  className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#FBD5D3] bg-white text-[#E4405F] shadow-sm transition-all duration-300 hover:scale-110 hover:bg-gradient-to-tr hover:from-[#F58529] hover:via-[#DD2A7B] hover:to-[#8134AF] hover:text-white hover:shadow-md"
                 >
                   <FaInstagram size={20} />
                 </a>
@@ -251,7 +223,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="mb-5 text-lg font-bold text-[#38240D]">
+            <h3 className="mb-5 text-lg font-bold text-[#2D1818]">
               Quick Links
             </h3>
             <div className="flex flex-col gap-3 text-sm font-medium">
@@ -265,9 +237,9 @@ export default function Footer() {
                 <Link
                   key={item.name}
                   href={makeLink(item.link)}
-                  className="text-[#5B4634] transition-all duration-300 hover:translate-x-1.5 hover:text-[#C05800] flex items-center gap-1.5"
+                  className="text-[#796565] transition-all duration-300 hover:translate-x-1.5 hover:text-[#E05353] flex items-center gap-1.5 font-bold"
                 >
-                  <ArrowRight size={14} className="text-[#C05800] opacity-60" />
+                  <ArrowRight size={14} className="text-[#E05353] opacity-70" />
                   <span>{item.name}</span>
                 </Link>
               ))}
@@ -276,7 +248,7 @@ export default function Footer() {
 
           {/* Dynamic Categories */}
           <div>
-            <h3 className="mb-5 text-lg font-bold text-[#38240D]">
+            <h3 className="mb-5 text-lg font-bold text-[#2D1818]">
               Product Categories
             </h3>
             <div className="flex flex-col gap-2.5 text-sm font-medium">
@@ -284,32 +256,32 @@ export default function Footer() {
                 <Link
                   key={idx}
                   href={makeLink(`/items?category=${encodeURIComponent(cat)}`)}
-                  className="text-[#5B4634] transition-all duration-300 hover:translate-x-1.5 hover:text-[#C05800] flex items-center gap-1.5"
+                  className="text-[#796565] transition-all duration-300 hover:translate-x-1.5 hover:text-[#E05353] flex items-center gap-1.5 font-bold"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#C05800]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#E05353]" />
                   <span className="truncate">{cat}</span>
                 </Link>
               ))}
               <Link
                 href={makeLink("/items")}
-                className="mt-2 text-xs font-bold text-[#C05800] hover:underline"
+                className="mt-2 text-xs font-bold text-[#E05353] hover:underline"
               >
                 View Full Catalog →
               </Link>
             </div>
           </div>
 
-          {/* Contact Info - Purely Dynamic from Firestore */}
+          {/* Contact Info */}
           <div>
-            <h3 className="mb-5 text-lg font-bold text-[#38240D]">
+            <h3 className="mb-5 text-lg font-bold text-[#2D1818]">
               Contact Info
             </h3>
 
-            <div className="space-y-4 text-[#5B4634]">
+            <div className="space-y-4 text-[#796565]">
               {dynamicAddress && (
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3E4D2]">
-                    <MapPin size={18} className="text-[#C05800]" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF0EF] text-[#E05353]">
+                    <MapPin size={18} />
                   </div>
                   <p className="leading-6 text-sm">{dynamicAddress}</p>
                 </div>
@@ -317,15 +289,15 @@ export default function Footer() {
 
               {phones.length > 0 && (
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3E4D2]">
-                    <Phone size={18} className="text-[#C05800]" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF0EF] text-[#E05353]">
+                    <Phone size={18} />
                   </div>
-                  <div className="flex flex-col gap-1 text-sm font-semibold">
+                  <div className="flex flex-col gap-1 text-sm font-bold">
                     {phones.map((p, idx) => (
                       <a
                         key={idx}
                         href={`tel:${String(p).replace(/\s+/g, "")}`}
-                        className="hover:text-[#C05800] transition-colors"
+                        className="hover:text-[#E05353] transition-colors"
                       >
                         {p}
                       </a>
@@ -336,15 +308,15 @@ export default function Footer() {
 
               {emails.length > 0 && (
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3E4D2]">
-                    <Mail size={18} className="text-[#C05800]" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF0EF] text-[#E05353]">
+                    <Mail size={18} />
                   </div>
-                  <div className="flex flex-col gap-1 text-sm font-semibold">
+                  <div className="flex flex-col gap-1 text-sm font-bold">
                     {emails.map((em, idx) => (
                       <a
                         key={idx}
                         href={`mailto:${em}`}
-                        className="hover:text-[#C05800] transition-colors break-all"
+                        className="hover:text-[#E05353] transition-colors break-all"
                       >
                         {em}
                       </a>
@@ -354,7 +326,7 @@ export default function Footer() {
               )}
 
               {!dynamicAddress && phones.length === 0 && emails.length === 0 && (
-                <p className="text-xs text-[#713600]">
+                <p className="text-xs text-[#C93B3B]">
                   Contact info will appear here once configured in the Admin panel.
                 </p>
               )}
@@ -362,15 +334,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar with Copyright & Social Icon Backup */}
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-[#E8D3BC] pt-8 text-sm text-[#6B5A4A] md:flex-row">
+        {/* Bottom Bar with Copyright */}
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-[#FBD5D3] pt-8 text-sm text-[#796565] md:flex-row">
           <p>© 2026 Raj Biosis Private Limited. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <a
               href="https://www.facebook.com/rajbiosispvtltd/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#5B4634] hover:text-[#1877F2] transition-colors"
+              className="text-[#796565] hover:text-[#1877F2] transition-colors"
               aria-label="Facebook"
             >
               <FaFacebook size={18} />
@@ -379,12 +351,12 @@ export default function Footer() {
               href="https://www.instagram.com/rajbiosisindia/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#5B4634] hover:text-[#E4405F] transition-colors"
+              className="text-[#796565] hover:text-[#E4405F] transition-colors"
               aria-label="Instagram"
             >
               <FaInstagram size={18} />
             </a>
-            <span className="text-xs text-[#713600]">
+            <span className="text-xs font-bold text-[#E05353]">
               Empowering Precision Healthcare Nationwide
             </span>
           </div>

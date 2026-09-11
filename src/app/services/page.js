@@ -5,9 +5,11 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import PageBanner from "@/components/PageBanner";
 import SectionTitle from "@/components/SectionTitle";
 import ServiceCard from "@/components/ServiceCard";
+
 import {
   Microscope,
   FlaskConical,
@@ -22,8 +24,12 @@ import {
   FileCheck,
   Cpu,
 } from "lucide-react";
-import { fallbackServices } from "@/data/servicesData";
 
+// ============================================================
+// STATIC WORKFLOW CONTENT
+// This is NOT service catalog data.
+// Services themselves come only from Firebase.
+// ============================================================
 const workflowSteps = [
   {
     step: "01",
@@ -52,24 +58,52 @@ const workflowSteps = [
 ];
 
 export default function ServicesPage() {
-  const [services, setServices] = useState(fallbackServices);
+  // ============================================================
+  // SERVICES ARE FIREBASE ONLY
+  // NO FALLBACK SERVICES
+  // ============================================================
+  const [services, setServices] = useState([]);
+
   const [contactInfo, setContactInfo] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const pathname = usePathname();
-  const pathParts = pathname.split("/").filter(Boolean);
-  const staticRoutes = ["about", "services", "products", "contact", "items"];
+
+  const pathParts = pathname
+    .split("/")
+    .filter(Boolean);
+
+  const staticRoutes = [
+    "about",
+    "services",
+    "products",
+    "contact",
+    "items",
+  ];
+
   const district =
-    pathParts.length > 0 && !staticRoutes.includes(pathParts[0])
+    pathParts.length > 0 &&
+      !staticRoutes.includes(pathParts[0])
       ? pathParts[0]
       : "";
 
+  // ============================================================
+  // DYNAMIC LINK HELPER
+  // ============================================================
   const makeLink = (path) => {
     if (!district) return path;
-    if (path === "/") return `/${district}`;
+
+    if (path === "/") {
+      return `/${district}`;
+    }
+
     return `/${district}${path}`;
   };
 
+  // ============================================================
+  // STATIC ICONS
+  // Service title & description are dynamic from Firebase.
+  // ============================================================
   const icons = [
     <Microscope size={28} key={1} />,
     <FlaskConical size={28} key={2} />,
@@ -79,28 +113,104 @@ export default function ServicesPage() {
     <Activity size={28} key={6} />,
   ];
 
+  // ============================================================
+  // FETCH SERVICES + CONTACT
+  // ============================================================
   useEffect(() => {
     const fetchServicesAndContact = async () => {
       try {
-        const [servicesSnap, contactSnap] = await Promise.all([
-          getDoc(doc(db, "websites", "clinidixcom", "pages", "services")),
-          getDoc(doc(db, "websites", "clinidixcom", "pages", "contact")),
-        ]);
+        const [servicesSnap, contactSnap] =
+          await Promise.all([
+            getDoc(
+              doc(
+                db,
+                "websites",
+                "rajvedcom",
+                "pages",
+                "services"
+              )
+            ),
 
-        if (servicesSnap.exists() && servicesSnap.data().services?.length > 0) {
-          const dbServices = servicesSnap.data().services.map((s, idx) => ({
-            ...fallbackServices[idx % fallbackServices.length],
-            title: s.title || fallbackServices[idx % fallbackServices.length].title,
-            desc: s.desc || fallbackServices[idx % fallbackServices.length].desc,
-          }));
-          setServices(dbServices);
+            getDoc(
+              doc(
+                db,
+                "websites",
+                "rajvedcom",
+                "pages",
+                "contact"
+              )
+            ),
+          ]);
+
+        // ======================================================
+        // SERVICES - FIREBASE ONLY
+        // ======================================================
+        if (servicesSnap.exists()) {
+          const firebaseServices =
+            servicesSnap.data().services;
+
+          if (
+            Array.isArray(firebaseServices) &&
+            firebaseServices.length > 0
+          ) {
+            const dbServices =
+              firebaseServices
+                .map((service, index) => ({
+                  id:
+                    service?.id ||
+                    `service-${index}`,
+
+                  // Admin field
+                  title:
+                    typeof service?.title ===
+                      "string"
+                      ? service.title.trim()
+                      : "",
+
+                  // Admin field
+                  desc:
+                    typeof service?.desc ===
+                      "string"
+                      ? service.desc.trim()
+                      : "",
+                }))
+                // Only show services having title
+                // or description
+                .filter(
+                  (service) =>
+                    service.title ||
+                    service.desc
+                );
+
+            setServices(dbServices);
+          } else {
+            // Firebase exists but has no services
+            setServices([]);
+          }
+        } else {
+          // Firebase document does not exist
+          setServices([]);
         }
 
+        // ======================================================
+        // CONTACT - FIREBASE ONLY
+        // ======================================================
         if (contactSnap.exists()) {
-          setContactInfo(contactSnap.data().contactInfo || []);
+          setContactInfo(
+            contactSnap.data().contactInfo || []
+          );
+        } else {
+          setContactInfo([]);
         }
       } catch (error) {
-        console.error("Error loading services/contact data:", error);
+        console.error(
+          "Error loading services/contact data:",
+          error
+        );
+
+        // IMPORTANT:
+        // Never load fallback services.
+        setServices([]);
       } finally {
         setLoading(false);
       }
@@ -109,36 +219,54 @@ export default function ServicesPage() {
     fetchServicesAndContact();
   }, []);
 
-  // Dynamically extract emergency helpline phone number
+  // ============================================================
+  // DYNAMIC EMERGENCY HELPLINE PHONE
+  // ============================================================
   const emergencyPhone = (() => {
     const item = contactInfo.find((c) => {
-      const l = (c?.label || "").toLowerCase();
+      const label = (
+        c?.label || ""
+      ).toLowerCase();
+
       return (
-        l.includes("phone") ||
-        l.includes("mobile") ||
-        l.includes("helpline") ||
-        l.includes("emergency") ||
-        l.includes("tel") ||
-        l.includes("contact")
+        label.includes("phone") ||
+        label.includes("mobile") ||
+        label.includes("helpline") ||
+        label.includes("emergency") ||
+        label.includes("tel") ||
+        label.includes("contact")
       );
     });
+
     if (!item) return "";
-    if (Array.isArray(item.value)) return item.value[0] || "";
-    return typeof item.value === "string" ? item.value.trim() : "";
+
+    if (Array.isArray(item.value)) {
+      return item.value[0] || "";
+    }
+
+    return typeof item.value === "string"
+      ? item.value.trim()
+      : "";
   })();
 
   return (
-    <div className="bg-[#FFF9EF]/40 text-[#38240D]">
-      {/* Banner */}
+    <div className="bg-[#FFF9F8] text-[#2D1818]">
+
+      {/* ========================================================
+          BANNER
+      ======================================================== */}
       <PageBanner
         badge="Technical Services"
         title="Biomedical Support From Setup to Service"
         subtitle="NABL-certified calibration, 2-hour emergency repair SLAs, cold-chain reagent distribution, and turnkey pathology setup."
       />
 
-      {/* Services Grid Section */}
-      <section className="section-padding bg-gradient-to-b from-white via-[#FFF9EF] to-[#FDFBD4]">
+      {/* ========================================================
+          SERVICES GRID
+      ======================================================== */}
+      <section className="section-padding bg-gradient-to-b from-white via-[#FFF9F8] to-[#FFF0EF]">
         <div className="container-custom">
+
           <SectionTitle
             badge="Full Service Catalog"
             title="Designed Around Reliable Operations"
@@ -146,25 +274,95 @@ export default function ServicesPage() {
             center
           />
 
-          <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service, index) => (
-              <ServiceCard
-                key={service.id || index}
-                icon={icons[index % icons.length]}
-                title={service.title}
-                description={service.desc}
-                badge={service.badge}
-                turnaround={service.turnaround}
-                highlights={service.highlights}
-              />
-            ))}
-          </div>
+          {/* ======================================================
+              LOADING STATE
+          ====================================================== */}
+          {loading ? (
+            <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="h-64 rounded-3xl border border-[#FBD5D3] bg-white animate-pulse shadow-sm"
+                />
+              ))}
+
+            </div>
+          ) : services.length > 0 ? (
+
+            /* ====================================================
+               DYNAMIC SERVICES FROM FIREBASE
+               ==================================================== */
+            <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+
+              {services.map(
+                (service, index) => (
+                  <ServiceCard
+                    key={
+                      service.id ||
+                      index
+                    }
+
+                    icon={
+                      icons[
+                      index %
+                      icons.length
+                      ]
+                    }
+
+                    title={
+                      service.title
+                    }
+
+                    description={
+                      service.desc
+                    }
+
+                    makeLink={
+                      makeLink
+                    }
+                  />
+                )
+              )}
+
+            </div>
+
+          ) : (
+
+            /* ====================================================
+               NO SERVICE STATE
+               ==================================================== */
+            <div className="mt-16 flex min-h-[260px] items-center justify-center rounded-3xl border border-dashed border-[#E9B8B5] bg-white px-6 text-center shadow-sm">
+
+              <div>
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FFF0EF] text-[#E05353] border border-[#FBD5D3]">
+                  <Wrench size={30} />
+                </div>
+
+                <h3 className="text-2xl font-bold text-[#2D1818]">
+                  No Services Available
+                </h3>
+
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-[#796565]">
+                  No services have been added
+                  from the admin panel yet.
+                  Please check back later.
+                </p>
+              </div>
+
+            </div>
+          )}
+
         </div>
       </section>
 
-      {/* Workflow Process Section */}
-      <section className="section-padding bg-white border-y border-[#E8D3BC]/60">
+      {/* ========================================================
+          WORKFLOW PROCESS
+          Static informational section - unchanged.
+      ======================================================== */}
+      <section className="section-padding bg-white border-y border-[#FBD5D3]/60">
         <div className="container-custom">
+
           <SectionTitle
             badge="Execution Framework"
             title="Our 4-Step Engineering Workflow"
@@ -173,99 +371,155 @@ export default function ServicesPage() {
           />
 
           <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {workflowSteps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <div
-                  key={index}
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-[#E8D3BC] bg-[#FFF9EF] p-8 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#C05800] hover:shadow-xl"
-                >
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-4xl font-black text-[#C05800]/40 group-hover:text-[#C05800] transition-colors">
-                        {step.step}
-                      </span>
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#C05800] shadow-sm">
-                        <Icon size={24} />
+
+            {workflowSteps.map(
+              (step, index) => {
+                const Icon = step.icon;
+
+                return (
+                  <div
+                    key={index}
+                    className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-[#FBD5D3] bg-[#FFF0EF] p-8 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-[#E05353] hover:shadow-xl"
+                  >
+
+                    <div>
+
+                      <div className="flex items-center justify-between">
+
+                        <span className="text-4xl font-black text-[#E05353]/35 group-hover:text-[#E05353] transition-colors">
+                          {step.step}
+                        </span>
+
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#E05353] shadow-sm">
+                          <Icon size={24} />
+                        </div>
+
                       </div>
+
+                      <h3 className="mt-6 text-xl font-bold text-[#2D1818] group-hover:text-[#E05353] transition-colors">
+                        {step.title}
+                      </h3>
+
+                      <p className="mt-3 text-sm leading-relaxed text-[#796565]">
+                        {step.desc}
+                      </p>
+
                     </div>
 
-                    <h3 className="mt-6 text-xl font-bold text-[#38240D] group-hover:text-[#C05800] transition-colors">
-                      {step.title}
-                    </h3>
+                    <div className="mt-6 pt-4 border-t border-[#FBD5D3]/50">
+                      <span className="text-xs font-bold text-[#C93B3B]">
+                        Phase {index + 1} Milestone
+                      </span>
+                    </div>
 
-                    <p className="mt-3 text-sm leading-relaxed text-[#5B4634]">
-                      {step.desc}
-                    </p>
                   </div>
+                );
+              }
+            )}
 
-                  <div className="mt-6 pt-4 border-t border-[#E8D3BC]/40">
-                    <span className="text-xs font-bold text-[#713600]">Phase {index + 1} Milestone</span>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>
 
-      {/* Breakdown SLA Box */}
-      <section className="section-padding bg-gradient-to-b from-[#FDFBD4] via-white to-[#FFF9EF]">
+      {/* ========================================================
+          BREAKDOWN SLA BOX
+      ======================================================== */}
+      <section className="section-padding bg-gradient-to-b from-[#FFF0EF] via-white to-[#FFF9F8]">
         <div className="container-custom">
-          <div className="rounded-3xl border border-[#E8D3BC] bg-gradient-to-r from-[#38240D] to-[#5B4634] p-8 sm:p-12 text-white shadow-xl">
+
+          <div className="rounded-3xl border border-[#FBD5D3] bg-gradient-to-r from-[#2A1414] to-[#381C1C] p-8 sm:p-12 text-white shadow-xl">
+
             <div className="grid lg:grid-cols-12 gap-8 items-center">
+
               <div className="lg:col-span-8">
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#C05800] px-4 py-1.5 text-xs font-bold text-white uppercase tracking-wider">
-                  <Zap size={14} /> Emergency Breakdown Helpline
+
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#E05353] px-4 py-1.5 text-xs font-bold text-white uppercase tracking-wider shadow-md shadow-[#E05353]/30">
+                  <Zap size={14} />
+                  Emergency Breakdown Helpline
                 </span>
 
                 <h3 className="mt-4 text-3xl font-black text-white sm:text-4xl">
                   Facing an Equipment Emergency in ICU or Lab?
                 </h3>
 
-                <p className="mt-3 text-base text-[#E8D3BC] leading-relaxed">
+                <p className="mt-3 text-base text-[#FBD5D3] leading-relaxed">
                   Our certified field engineers are equipped with OEM diagnostic kits and genuine spare parts for instant on-site restoration.
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-6 text-sm font-semibold text-white">
+
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={18} className="text-[#C05800]" />
-                    <span>2-Hour On-Site SLA</span>
+                    <CheckCircle2
+                      size={18}
+                      className="text-[#FF7B72]"
+                    />
+                    <span>
+                      2-Hour On-Site SLA
+                    </span>
                   </div>
+
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={18} className="text-[#C05800]" />
-                    <span>Loaner Analyzer Option</span>
+                    <CheckCircle2
+                      size={18}
+                      className="text-[#FF7B72]"
+                    />
+                    <span>
+                      Loaner Analyzer Option
+                    </span>
                   </div>
+
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={18} className="text-[#C05800]" />
-                    <span>NABL Re-calibration Included</span>
+                    <CheckCircle2
+                      size={18}
+                      className="text-[#FF7B72]"
+                    />
+                    <span>
+                      NABL Re-calibration Included
+                    </span>
                   </div>
+
                 </div>
               </div>
 
-              <div className="lg:col-span-4 flex flex-col items-center justify-center text-center border-t lg:border-t-0 lg:border-l border-[#E8D3BC]/20 pt-6 lg:pt-0 lg:pl-8">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#E8D3BC]">Emergency Dispatch</p>
+              <div className="lg:col-span-4 flex flex-col items-center justify-center text-center border-t lg:border-t-0 lg:border-l border-[#FBD5D3]/20 pt-6 lg:pt-0 lg:pl-8">
+
+                <p className="text-xs font-bold uppercase tracking-wider text-[#FBD5D3]">
+                  Emergency Dispatch
+                </p>
+
                 {emergencyPhone ? (
                   <a
-                    href={`tel:${emergencyPhone.replace(/\s+/g, "")}`}
-                    className="mt-2 text-2xl font-black text-white hover:text-[#FBBF24] transition-colors inline-block"
+                    href={`tel:${emergencyPhone.replace(
+                      /\s+/g,
+                      ""
+                    )}`}
+                    className="mt-2 text-2xl font-black text-white hover:text-[#FF7B72] transition-colors inline-block"
                   >
                     {emergencyPhone}
                   </a>
                 ) : (
-                  <p className="mt-2 text-sm text-[#E8D3BC]">24/7 Field Dispatch Active</p>
+                  <p className="mt-2 text-sm text-[#FBD5D3]">
+                    24/7 Field Dispatch Active
+                  </p>
                 )}
+
                 <Link
-                  href={makeLink("/contact")}
-                  className="mt-5 w-full rounded-2xl bg-[#C05800] py-3.5 text-center text-sm font-bold text-white shadow-lg transition-all hover:bg-[#713600]"
+                  href={makeLink(
+                    "/contact"
+                  )}
+                  className="mt-5 w-full rounded-2xl bg-[#E05353] py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-[#E05353]/30 transition-all hover:bg-[#C93B3B]"
                 >
                   Book Priority Repair
                 </Link>
+
               </div>
+
             </div>
           </div>
+
         </div>
       </section>
+
     </div>
   );
 }

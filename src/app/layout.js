@@ -6,14 +6,14 @@ import { Toaster } from "react-hot-toast";
 
 export const metadata = {
   metadataBase: new URL(
-    "https://clinidix.com"
+    "https://rajved.com"
   ),
 
   title:
-    "Coral Care | Biomedical & Diagnostic Equipment",
+    "Raj Biosis | Biomedical & Diagnostic Equipment",
 
   description:
-    "Raj Biosis Private Limited (Raj Biomedical) supplies CBC Machines, Hematology Analyzers, Biochemistry Analyzers, ELISA Readers and laboratory equipment across India.",
+    "Raj Biosis Private Limited  supplies CBC Machines, Hematology Analyzers, Biochemistry Analyzers, ELISA Readers and laboratory equipment across India.",
 
   keywords: [
     "Biomedical Equipment Supplier",
@@ -24,17 +24,17 @@ export const metadata = {
     "Diagnostic Equipment Supplier",
     "Medical Equipment Supplier India",
     "Raj Biosis",
-    "Raj Biomedical",
+    "Raj Biosis",
   ],
 
   openGraph: {
     title:
-      "Coral Care | Biomedical & Diagnostic Equipment",
+      "Raj Biosis | Biomedical & Diagnostic Equipment",
 
     description:
       "Human-centered healthcare technology with warmer, approachable visual cues.",
 
-    url: "https://clinidix.com",
+    url: "https://rajved.com",
 
     siteName: "Raj Biosis Private Limited",
 
@@ -55,7 +55,7 @@ export const metadata = {
     card: "summary_large_image",
 
     title:
-      "Coral Care | Biomedical & Diagnostic Equipment",
+      "Raj Biosis | Biomedical & Diagnostic Equipment",
 
     description:
       "Human-centered healthcare technology with warmer, approachable visual cues.",
@@ -70,7 +70,7 @@ export const metadata = {
   },
 
   alternates: {
-    canonical: "https://clinidix.com",
+    canonical: "https://rajved.com",
   },
 };
 
@@ -79,7 +79,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased variant-06" data-ui-variant="coral" suppressHydrationWarning>
+      <body className="bg-[#FFF9F8] text-[#2D1818] antialiased selection:bg-[#E05353] selection:text-white" suppressHydrationWarning>
         <Navbar />
 
         <main>
@@ -87,6 +87,11 @@ export default function RootLayout({
             position="top-right"
             toastOptions={{
               duration: 3000,
+              style: {
+                background: "#2D1818",
+                color: "#FFFFFF",
+                border: "1px solid #FBD5D3",
+              },
             }}
           />
 
